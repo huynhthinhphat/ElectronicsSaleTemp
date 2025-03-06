@@ -1,6 +1,6 @@
 package com.tip.b18.electronicsales.filters;
 
-import com.tip.b18.electronicsales.utils.JwtUtil;
+import com.tip.b18.electronicsales.services.JwtService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,14 +18,14 @@ import java.util.Collections;
 @WebFilter
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtUtil jwtUtil;
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String token = jwtUtil.getToken(request);
+        String token = jwtService.getToken(request);
 
-        if(token != null && jwtUtil.validateToken(token)){
-            Claims claims = jwtUtil.extractClaims(token);
+        if(token != null && jwtService.validateToken(token)){
+            Claims claims = jwtService.extractClaims(token);
 
             String subject = claims.getSubject();
             String role = claims.get("role", String.class);

@@ -1,10 +1,10 @@
 package com.tip.b18.electronicsales.services;
 
 import com.tip.b18.electronicsales.dto.AccountDTO;
-import com.tip.b18.electronicsales.entities.Account;
+import com.tip.b18.electronicsales.dto.AccountLoginDTO;
+import com.tip.b18.electronicsales.dto.AccountRegisterDTO;
 
 public interface AccountService {
-    AccountDTO loginAccount(AccountDTO accountDTO);
-    AccountDTO registerAccount(AccountDTO accountDTO);
-    AccountDTO convertToDTO(Account account);
+    AccountDTO loginAccount(AccountLoginDTO accountLoginDTO);
+    AccountDTO registerAccount(AccountRegisterDTO accountRegisterDTO);
 }

@@ -1,8 +1,7 @@
 package com.tip.b18.electronicsales.configurations;
 
 import com.tip.b18.electronicsales.filters.JwtAuthenticationFilter;
-import com.tip.b18.electronicsales.utils.JwtUtil;
-import org.springframework.beans.factory.annotation.Value;
+import com.tip.b18.electronicsales.services.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -14,17 +13,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 public class SecurityConfig {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
 
     @Bean
-    public JwtUtil jwtUtil() {
-        return new JwtUtil(SECRET_KEY);
-    }
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
-        return new JwtAuthenticationFilter(jwtUtil);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtService jwtService) {
+        return new JwtAuthenticationFilter(jwtService);
     }
 
     @Bean

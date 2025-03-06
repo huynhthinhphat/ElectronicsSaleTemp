@@ -1,12 +1,16 @@
 package com.tip.b18.electronicsales.services.impls;
 
 import com.tip.b18.electronicsales.dto.AccountDTO;
+import com.tip.b18.electronicsales.dto.AccountLoginDTO;
+import com.tip.b18.electronicsales.dto.AccountRegisterDTO;
 import com.tip.b18.electronicsales.entities.Account;
-import com.tip.b18.electronicsales.exceptions.LoginMessageException;
-import com.tip.b18.electronicsales.exceptions.RegisterMessageException;
+import com.tip.b18.electronicsales.exceptions.AlreadyExistsException;
+import com.tip.b18.electronicsales.exceptions.CredentialsException;
+import com.tip.b18.electronicsales.exceptions.MessageConstant;
+import com.tip.b18.electronicsales.mappers.AccountMapper;
 import com.tip.b18.electronicsales.repositories.AccountRepository;
 import com.tip.b18.electronicsales.services.AccountService;
-import com.tip.b18.electronicsales.utils.PasswordUtil;
+import com.tip.b18.electronicsales.services.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,52 +18,42 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
-    private final PasswordUtil passwordUtil;
+    private final PasswordService passwordService;
+    private final AccountMapper accountMapper;
 
     @Override
-    public AccountDTO loginAccount(AccountDTO accountReq) {
+    public AccountDTO loginAccount(AccountLoginDTO accountLoginDTO) {
         //Find an account by userName
-        Account account = accountRepository.findByUserName(accountReq.getUserName())
-                .orElseThrow(() -> new LoginMessageException("Tài khoản hoặc mật khẩu không đúng"));
+        Account account = accountRepository.findByUserName(accountLoginDTO.getUserName())
+                .orElseThrow(() -> new CredentialsException(MessageConstant.INVALID_CREDENTIALS_MESSAGE));
 
         //Check password
-        boolean checkPassword = passwordUtil.matches(accountReq.getPassword(), account.getPassword());
+        boolean checkPassword = passwordService.matches(accountLoginDTO.getPassword(), account.getPassword());
         if(!checkPassword){
-            throw new LoginMessageException("Tài khoản hoặc mật khẩu không đúng");
+            throw new CredentialsException(MessageConstant.INVALID_CREDENTIALS_MESSAGE);
         }
 
         //Convert Account entity to AccountDTO
-        return convertToDTO(account);
+        return accountMapper.toDTO(account);
     }
 
     @Override
-    public AccountDTO registerAccount(AccountDTO accountReq) {
+    public AccountDTO registerAccount(AccountRegisterDTO accountRegisterDTO) {
         //Find an account by userName
-        accountRepository.findByUserName(accountReq.getUserName())
-                .ifPresent(account -> {throw new RegisterMessageException("Tài khoản tồn tại");});
+        accountRepository.findByUserName(accountRegisterDTO.getUserName())
+                .ifPresent(account -> {throw new AlreadyExistsException(MessageConstant.EXIST_ACCOUNT_MESSAGE);});
 
-        //Encryption password
-        String encryptPassword = passwordUtil.encryptPassword(accountReq.getPassword());
+        //Encrypt password
+        String password = passwordService.encryptPassword(accountRegisterDTO.getPassword());
 
-        //Create a new account
-        Account newAccount = new Account();
-        newAccount.setFullName(accountReq.getFullName());
-        newAccount.setUserName(accountReq.getUserName());
-        newAccount.setPassword(encryptPassword);
+        Account account = new Account();
+        account.setFullName(accountRegisterDTO.getFullName());
+        account.setUserName(accountRegisterDTO.getUserName());
+        account.setPassword(password);
+        account.setRole(false);
 
         //Save and convert Account entity to AccountDTO
-        return convertToDTO(accountRepository.save(newAccount));
+        return accountMapper.toDTO(accountRepository.save(account));
     }
 
-    //Convert Account entity to AccountDTO
-    @Override
-    public AccountDTO convertToDTO(Account account) {
-        AccountDTO accountDTO = new AccountDTO();
-        accountDTO.setId(account.getId());
-        accountDTO.setFullName(account.getFullName());
-        accountDTO.setEmail(account.getEmail());
-        accountDTO.setUserName(account.getUserName());
-        accountDTO.setRole(account.isRole());
-        return accountDTO;
-    }
 }
